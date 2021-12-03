@@ -1,0 +1,9 @@
+---
+- name: Create user repl
+  mysql_user:
+    login_user: root
+    login_password: '{{ root_password}}'
+    name: repl
+    password: '{{ root_password }}'
+    priv: "*.*:REPLICATION SLAVE,REPLICATION CLIENT"
+    host: '%'

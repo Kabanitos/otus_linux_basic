@@ -1,0 +1,8 @@
+[client]
+user=root
+password='{{root_password}}'
+
+[mysqld]
+bind-address ={{ slave_host }}
+server-id = 2
+log_bin = mysql-bin

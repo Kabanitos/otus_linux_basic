@@ -1,0 +1,15 @@
+---
+
+- hosts: slave
+  become: yes
+  become_user: root
+
+  vars_files:
+    - vars.yaml
+   
+
+  roles:
+    - install_mysql_slave
+    - replication_slave
+    - web_balance_slave
+    - install_node_exporter

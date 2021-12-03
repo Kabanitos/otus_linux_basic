@@ -1,0 +1,56 @@
+---
+- name: Загрузка MySQL repo
+  get_url:
+    url: https://dev.mysql.com/get/mysql80-community-release-el7-4.noarch.rpm
+    dest: /tmp
+
+- name: Установка Mysql repo
+  shell: /usr/bin/rpm -ivh /tmp/mysql80-community-release-el7-4.noarch.rpm && touch /tmp/mysql80.ok
+  args:
+    creates: /tmp/mysql80.ok
+
+- name: Установка пакета mysql-server
+  yum:
+    name: '{{ item }}'
+    state: present
+  with_items:
+    - mysql-server
+    - MySQL-python
+
+- name: Старт mysqld демон
+  systemd:
+    name: mysqld
+    state: started
+    enabled: yes
+
+- name: Парсим пароль mysql из mysql.log
+  shell: grep 'temporary password' /var/log/mysqld.log | sed 's/.* //'
+  register: old_password_mysql
+- debug:
+    msg: '{{ old_password_mysql.stdout }}'
+
+
+- name:  Смена пароля root
+  shell: mysql --user root --password='{{ old_password_mysql.stdout }}' --connect-expired-password --execute="ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password  BY '{{root_password}}';" && touch /tmp/root_password.ok
+  args:
+    creates: /tmp/root_password.ok
+
+- name: Удаление анонимных пользователей
+  shell: mysql --user root --password="{{ root_password }}" --connect-expired-password --execute="DELETE FROM mysql.user WHERE User='';" && touch /tmp/dell_annonymous_user.ok
+  args:
+    creates: /tmp/dell_annonymous_user.ok
+
+- name: Удаление тестовых баз 
+  shell: mysql --user root --password="{{ root_password }}" --connect-expired-password --execute="DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%';" && touch /tmp/dell_test_mysqldb.ok
+  args: 
+    creates: /tmp/dell_test_mysqldb.ok
+
+- name: Add my.cnf to /etc
+  template:
+    src: my.cnf.j2
+    dest: /etc/my.cnf   
+
+- name: Restart daemon mysqld
+  systemd:
+    name: mysqld
+    state: restarted 

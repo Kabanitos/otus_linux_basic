@@ -1,0 +1,16 @@
+---
+
+- hosts: master
+  become: yes
+  become_user: root
+
+  vars_files:
+    - vars.yaml
+   
+
+  roles:
+    - install_grafana 
+    - install_prometheus
+    - install_mysql_master
+    - replication_master
+    - web_balance_master

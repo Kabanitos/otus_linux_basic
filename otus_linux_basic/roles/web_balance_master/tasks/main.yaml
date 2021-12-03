@@ -1,0 +1,53 @@
+---
+
+- name: install EPEL repo
+  yum:
+    name: epel-release
+
+- name: install nginx,httpd
+  yum:
+    name: 
+      - nginx
+      - httpd
+    state: latest
+
+- name: backup conf httpd
+  copy:
+    remote_src: yes 
+    src: /etc/httpd/conf/httpd.conf
+    dest: /etc/httpd/conf/httpd.conf.back
+    backup: yes
+
+- name: backup conf nginx 
+  copy:
+    remote_src: yes
+    src: /etc/nginx/nginx.conf
+    dest: /etc/nginx/nginx.conf.back
+    backup: yes
+
+- name: Editing the httpd config
+  lineinfile:
+    path: /etc/httpd/conf/httpd.conf
+    regexp: '^Listen '
+    insertafter: '^#Listen '
+    line: Listen {{master_host}}:8080
+
+- name: Editing the nginx config
+  template:
+    src: nginx.conf.j2
+    dest: /etc/nginx/nginx.conf
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Restart daemon httpd
+  systemd:
+    name: httpd
+    state: restarted
+    enabled: yes
+
+- name: Restart daemon nginx
+  systemd:
+    name: nginx
+    state: restarted
+    enabled: yes

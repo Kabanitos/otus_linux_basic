@@ -1,0 +1,28 @@
+---
+
+
+- name: install httpd
+  yum:
+    name: httpd
+    state: latest
+
+- name: backup conf httpd
+  copy:
+    remote_src: yes 
+    src: /etc/httpd/conf/httpd.conf
+    dest: /etc/httpd/conf/httpd.conf.back
+    backup: yes
+
+- name: Editing the httpd config
+  lineinfile:
+    path: /etc/httpd/conf/httpd.conf
+    regexp: '^Listen '
+    insertafter: '^#Listen '
+    line: Listen {{slave_host}}:8080
+
+
+- name: Restart daemon httpd, nginx
+  systemd:
+    name:  httpd 
+    state: restarted
+    enabled: yes

@@ -1,0 +1,110 @@
+---
+
+
+- name: Добавляем системные группы
+  group:
+    name: "{{ item }}"
+    system: yes
+  with_items:
+     - prometheus
+     - node_exporter
+
+- name: Добавляем системного пользователя 
+  user:
+    name: "{{ item }}"
+    shell: /sbin/nologin
+    create_home: no
+  with_items:
+    - prometheus
+    - node_exporter
+
+- name: Создание директори 
+  file:
+    state: directory
+    path: "{{ item }}"
+    owner: prometheus
+    group: prometheus 
+  with_items:
+    - /etc/prometheus
+    - /var/lib/prometheus
+    
+
+- name: Создание директори /opt/prometheus
+  file:
+    path: /opt/prometheus 
+    state: directory
+    
+    
+
+- name: Copy  package
+  copy:
+    src: "{{ item }}" 
+    dest: /opt/prometheus
+  with_items:
+      - prometheus-2.32.0-beta.0.linux-amd64
+      - node_exporter-1.2.2.linux-amd64
+
+
+- name: Copy node_exporter in /usr/local/bin  
+  copy:
+    remote_src: yes
+    src: /opt/prometheus/node_exporter-1.2.2.linux-amd64/node_exporter
+    dest: /usr/local/bin
+    owner: node_exporter
+    group: node_exporter
+    mode: 0766
+
+- name: Copy prometheus,promtool  in /usr/local/bin
+  copy:
+    src: /opt/prometheus/prometheus-2.32.0-beta.0.linux-amd64/{{ item }}
+    dest: /usr/local/bin
+    remote_src: yes
+    owner: prometheus
+    group: prometheus
+    mode: 0766
+  with_items:
+      - prometheus
+      - promtool
+
+
+- name: Copy unit node_exporter.service, prometheus.service
+  copy:
+    src: "{{ item}}"
+    dest: /etc/systemd/system
+    mode: 0777
+  with_items:
+      - node_exporter.service
+      - prometheus.service
+
+- name: Copy consoles,consoles_libraries,prometheus.yml  in /usr/local/bin
+  copy:
+    remote_src: yes
+    src: /opt/prometheus/prometheus-2.32.0-beta.0.linux-amd64/{{ item }}
+    dest: /etc/prometheus
+    owner: prometheus
+    group: prometheus
+    directory_mode: yes
+  with_items:
+      - consoles
+      - console_libraries
+
+
+- name: Copy prometheus.yml  
+  template:
+    src: prometheus.yml.j2
+    dest: /etc/prometheus/prometheus.yml
+    owner: prometheus
+    group: prometheus
+
+- name: Reload services
+  systemd:
+    daemon_reload: yes
+
+- name: Start service  prometheus node_exporter.service
+  systemd:
+    name: "{{ item }}"
+    state: started
+  with_items:
+   - node_exporter
+   - prometheus
+ 

@@ -1,0 +1,41 @@
+---
+
+- name: STOP SLAVE
+  mysql_replication:
+    mode: stopslave
+    login_user: root
+    login_password: '{{ root_password}}'
+
+
+- name: Get primary binlog file name
+  shell: mysql -u repl  -h '{{master_host}}' -e "SHOW MASTER STATUS;" > /tmp/mysql.log && cat /tmp/mysql.log | grep mysql-bin | awk '{print $1}'
+  register: mysql_bin
+- debug:
+    msg: '{{ mysql_bin.stdout }}'
+
+
+- name: Get primary binlog file name
+  shell: mysql -u repl  -h '{{master_host}}' -e "SHOW MASTER STATUS;" > /tmp/mysql.log && cat /tmp/mysql.log | grep mysql-bin | awk '{print $2}'
+  register: mysql_position_bin
+- debug:
+    msg: '{{ mysql_position_bin.stdout }}'
+
+- name: Configure replication on the slave
+  mysql_replication:
+    mode: changemaster
+    master_user: repl
+    master_password: '{{ root_password }}'
+    master_host: '{{ master_host }}' 
+    master_log_file: '{{ mysql_bin.stdout }}'
+    master_log_pos: '{{ mysql_position_bin.stdout }}'
+    login_user: root
+    login_password: '{{ root_password}}'
+
+- name: START SLAVE
+  mysql_replication:
+    mode: startslave
+    login_user: root
+    login_password: '{{ root_password}}'
+    
+
+

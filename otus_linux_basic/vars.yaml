@@ -1,0 +1,16 @@
+######################## variable node_exporter
+
+#srv_pr_master: 10.0.2.20
+#srv_nd_master: 10.0.2.20
+
+
+####################### variable для mysql
+
+root_password: 1qaz@WSX
+master_host:  192.168.0.25
+slave_host:  192.168.0.12
+
+#######################variable wordpress
+db_wordpress: wordpress
+user_wordpress: wordpress
+passwd_wordpress: 1qaz@WSX

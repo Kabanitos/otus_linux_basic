@@ -1,0 +1,44 @@
+---
+
+
+- name: Добавляем системные группы
+  group:
+    name: node_exporter
+    system: yes
+  
+- name: Добавляем системного пользователя 
+  user:
+    name: node_exporter
+    shell: /sbin/nologin
+    create_home: no
+
+- name: Copy  package
+  copy:
+    src: node_exporter-1.2.2.linux-amd64
+    dest: /opt
+
+- name: Copy node_exporter in /usr/local/bin  
+  copy:
+    remote_src: yes
+    src: /opt/node_exporter-1.2.2.linux-amd64/node_exporter
+    dest: /usr/local/bin
+    owner: node_exporter
+    group: node_exporter
+    mode: 0766
+
+- name: Copy unit node_exporter.service
+  copy:
+    src: node_exporter.service
+    dest: /etc/systemd/system
+    mode: 0777
+
+- name: Reload services
+  systemd:
+    daemon_reload: 
+
+- name: Start service node_exporter
+  systemd:
+    name: node_exporter
+    state: started
+ 
+ 

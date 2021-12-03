@@ -1,0 +1,33 @@
+---
+
+- name: Загружаем файл репозитория grafana
+  copy:
+    src: grafana.repo
+    dest: /etc/yum.repos.d/grafana.repo
+    owner: root
+    group: root
+    mode: 0755
+
+- name: Обновляем список repo 
+  yum:
+     name: '*'
+     state: latest
+
+- name: Устанавливаем Grafana
+  yum:
+    name: grafana
+    state: latest
+
+- name: Останавливаем firewall
+  systemd:
+    name: firewalld
+    state: stopped
+    enabled: no
+
+- name: Старт Grafana
+  systemd:
+    name: grafana-server
+    state: started
+    enabled: yes
+
+
